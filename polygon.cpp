@@ -12,6 +12,8 @@
 #include <QObject>
 #include <QGraphicsView>
 #include <QGraphicsScene>
+#include <QtMath>
+#include "circle.h"
 Polygon::Polygon()
 {
     isdrawing = ok = 0;
@@ -23,7 +25,7 @@ Polygon::Polygon()
     isrotate = 0;
     angle = 0;
     iszooming = 0;
-
+    square = 0;
 }
 
 QRectF Polygon::boundingRect() const
@@ -35,10 +37,10 @@ void Polygon::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
     if (iszooming) {
         bool ok;
         if (zoom > this->scale()) ok = 1; else ok = 0;
+        if (ok) this->setScale(this->scale() +  0.001 * time1.elapsed());
+            else this->setScale(this->scale() - 0.001 * time1.elapsed());
         if ((ok && zoom <= this->scale()) || (!ok && zoom >= this->scale()))
             iszooming = 0;
-        if (ok) this->setScale(this->scale() + 0.001 * time1.elapsed());
-            else this->setScale(this->scale() - 0.001 * time1.elapsed());
         if (time1.elapsed() != 0) time1.restart();
     }
     if (isrotate) {
@@ -55,11 +57,14 @@ void Polygon::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
         }
         if (cur.x() != -1 && points.size() > 0) painter->drawLine(points[points.size() - 1], cur);
     } else {
+        QPen pen;
+        pen.setWidthF(2 / this->scale());
+        painter->setPen(pen);
         painter->setBrush(QBrush(Qt::blue));
         painter->drawPolygon(points);
         painter->setPen(Qt::NoPen);
         painter->setBrush(QBrush(Qt::yellow));
-        painter->drawEllipse(center, 3 / this->scale(), 3 / this->scale());
+        painter->drawEllipse(center, 2 / this->scale(), 3 / this->scale());
     }
 }
 
@@ -68,8 +73,8 @@ void Polygon::draw() {
     bound = QRectF(0, 0, 700, 700);
 }
 
-bool Polygon::check_distance(QPointF a, QPointF b) {
-    return ((a.x() - b.x()) * (a.x() - b.x()) + (a.y() - b.y()) * (a.y() - b.y())) < 60;
+double Polygon::distance(QPointF a, QPointF b) {
+    return sqrt((a.x() - b.x()) * (a.x() - b.x()) + (a.y() - b.y()) * (a.y() - b.y()));
 }
 
 void Polygon::resize_bound() {
@@ -83,19 +88,16 @@ void Polygon::resize_bound() {
     bound = QRectF(mnx, mny, mxx - mnx, mxy - mny);
 }
 
-Polygon* Polygon::getfocused() {
-    return focused;
-}
-
 void Polygon::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    Circle::focused = NULL;
     focused = this;
-    qDebug() << "Pressed!";
     if (!isdrawing) return;
     points.push_back(event->pos());
-    if (points.size() != 1 && check_distance(points[0], points[points.size() - 1])) {
+    if (points.size() != 1 && distance(points[0], points[points.size() - 1]) < 10) {
         isdrawing = 0;
         points.pop_back();
         calc_center();
+        calc_perimeter();
         this->setTransformOriginPoint(center);
         resize_bound();
     }
@@ -113,7 +115,7 @@ void Polygon::hoverMoveEvent(QGraphicsSceneHoverEvent *event) {
 
 void Polygon::calc_center()
 {
-    double Area = 0, BackX, BackY, NextX, NextY;
+    double BackX, BackY, NextX, NextY;
     center.setX(0); center.setY(0);
     for(int i = 0; i < points.size(); i++)
     {
@@ -122,14 +124,15 @@ void Polygon::calc_center()
         NextY = points[(i + 1) % points.size()].y();
         NextX = points[(i + 1) % points.size()].x();
         double a = BackX * NextY - NextX * BackY;
-        Area += a;
+        square += a;
         center.setX(center.x() + (BackX + NextX) * a);
         center.setY(center.y() + (BackY + NextY) * a);
     }
-    Area /= 2;
-    if (Area == 0) return;
-    center.setX(center.x() / (Area * 6));
-    center.setY(center.y() / (Area * 6));
+    square /= 2;
+    if (square == 0) return;
+    center.setX(center.x() / (square * 6));
+    center.setY(center.y() / (square * 6));
+    square = abs(square);
 }
 
 void Polygon::rotate(double angle) {
@@ -159,4 +162,13 @@ void Polygon::zoom_out(double zoom) {
     this->zoom = zoom;
     time1.restart();
     scene->update();
+}
+
+void Polygon::calc_perimeter() {
+    double perimeter = 0;
+    for (int i = 0; i < points.size() - 1; i++) {
+        perimeter += distance(points[i], points[i + 1]);
+    }
+    perimeter += distance(points[points.size() - 1], points[0]);
+    this->perimeter = perimeter;
 }

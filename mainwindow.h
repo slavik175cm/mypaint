@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include "polygon.h"
+#include "circle.h"
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -18,6 +19,8 @@ public:
     QGraphicsScene *Scene;
     void timerEvent(QTimerEvent *event);
     Polygon *prevfocus = NULL;
+    bool changing = 0;
+    QStringList myparse(QString text, bool *ok);
 private slots:
     void on_add_polygon_clicked();
 
@@ -26,7 +29,11 @@ private slots:
 
     void on_zoom_valueChanged(int value);
 
-    void on_pushButton_clicked();
+    void on_change_zoom_button_clicked();
+
+    void on_add_figure_clicked();
+
+    void on_add_circle_clicked();
 
 private:
     Ui::MainWindow *ui;

@@ -19,19 +19,19 @@ public:
     QVector<QPointF> points;
     bool isdrawing, ok, isrotate, clockwise, iszooming;
     QPointF cur, center;
-    double angle, zoom;
+    double angle, zoom, square, perimeter;
     void mousePressEvent(QGraphicsSceneMouseEvent *event);
-    bool check_distance(QPointF a, QPointF b);
+    double distance(QPointF a, QPointF b);
     void hoverMoveEvent(QGraphicsSceneHoverEvent *event);
     void draw();
     void resize_bound();
     static Polygon* focused;
-    static Polygon* getfocused();
     void calc_center();
     void rotate(double angle);
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
     QElapsedTimer time, time1;
     void zoom_out(double zoom);
+    void calc_perimeter();
 };
 //Polygon* Polygon::focused = NULL;
 
