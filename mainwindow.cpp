@@ -7,8 +7,11 @@
 #include <QString>
 #include <QtMath>
 #include <QVector>
+
 Polygon* Polygon::focused = NULL;
 Circle* Circle::focused = NULL;
+const double pi = 3.1415926535897932384626433832795;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -41,17 +44,32 @@ void MainWindow::on_add_polygon_clicked()
 }
 
 void MainWindow::timerEvent(QTimerEvent *event) {
-    if (Polygon::focused == NULL) return;
-    ui->square->setText(QString::number(Polygon::focused->square * pow(Polygon::focused->scale(), 2)));
-    ui->perimeter->setText(QString::number(Polygon::focused->perimeter * Polygon::focused->scale()));
+    if (Polygon::focused != NULL) {
+        ui->square->setText(QString::number(Polygon::focused->square * pow(Polygon::focused->scale(), 2)));
+        ui->perimeter->setText(QString::number(Polygon::focused->perimeter * Polygon::focused->scale()));
 
-    if (Polygon::focused->iszooming) {
-        ui->zoom->setValue((Polygon::focused->scale() - 1) / 0.05 + 20);
+        if (Polygon::focused->iszooming)
+            ui->zoom->setValue((Polygon::focused->scale() - 1) / 0.05 + 20);
+
+        if (polygon_prevfocus != Polygon::focused) {
+            ui->zoom_text->setText(QString::number(Polygon::focused->scale()));
+            ui->zoom->setValue((Polygon::focused->scale() - 1) / 0.05 + 20);
+            polygon_prevfocus = Polygon::focused;
+            circle_prevfocus = NULL;
+        }
     }
-    if (prevfocus != Polygon::focused) {
-        ui->zoom_text->setText(QString::number(Polygon::focused->scale()));
-        ui->zoom->setValue((Polygon::focused->scale() - 1) / 0.05 + 20);
-        prevfocus = Polygon::focused;
+    if (Circle::focused != NULL) {
+        if (Circle::focused->radius == -1) return;
+        ui->square->setText(QString::number(pi * pow(Circle::focused->radius, 2) * pow(Circle::focused->scale(), 2)));
+        ui->perimeter->setText(QString::number(pi * Circle::focused->radius * Circle::focused->scale()));
+        if (Circle::focused->iszooming)
+            ui->zoom->setValue((Circle::focused->scale() - 1) / 0.05 + 20);
+        if (circle_prevfocus != Circle::focused) {
+            ui->zoom_text->setText(QString::number(Circle::focused->scale()));
+            ui->zoom->setValue((Circle::focused->scale() - 1) / 0.05 + 20);
+            circle_prevfocus = Circle::focused;
+            polygon_prevfocus = NULL;
+        }
     }
 }
 
@@ -68,9 +86,9 @@ void MainWindow::on_zoom_valueChanged(int value)
         Polygon::focused->setScale(zoom);
         ui->zoom_text->setText(QString::number(Polygon::focused->scale()));
      }
-    if (Circle::getfocused() != NULL) {
-        qDebug() << Circle::getfocused()->radius << " " << zoom;
-        Circle::getfocused()->setScale(zoom);
+    if (Circle::focused != NULL && !Circle::focused->iszooming) {
+        Circle::focused->setScale(zoom);
+        ui->zoom_text->setText(QString::number(Circle::focused->scale()));
         Scene->update();
     }
 }
@@ -80,9 +98,11 @@ void MainWindow::on_change_zoom_button_clicked()
     bool ok;
     if (ui->zoom_text->text().toDouble(&ok) < 0) return;
     if (!ok) return;
-    if (Polygon::focused != NULL) {
+    if (Polygon::focused != NULL)
         Polygon::focused->zoom_out(ui->zoom_text->text().toDouble());
-    }
+    if (Circle::focused != NULL)
+        Circle::focused->zoom_out(ui->zoom_text->text().toDouble());
+
 }
 
 QStringList MainWindow::myparse(QString text, bool *ok) {
@@ -95,7 +115,6 @@ QStringList MainWindow::myparse(QString text, bool *ok) {
     for (int i = 0; i < normal_list.size(); i++) {
         bool ok;
         normal_list[i].toDouble(&ok);
-        qDebug() << ok;
         if (!ok) return normal_list;
     }
     *ok = true;
@@ -133,8 +152,18 @@ void MainWindow::on_add_circle_clicked()
         a->radius = list[i + 2].toDouble();
         a->setTransformOriginPoint(a->x, a->y);
         a->focused = a;
+        a->bound = QRectF(a->x - a->radius, a->y - a->radius, a->radius * 2, a->radius * 2);
         a->scene = Scene;
         Scene->addItem(a);
     }
+    Scene->update();
+}
+
+void MainWindow::on_draw_circle_clicked()
+{
+    Circle *a = new Circle();
+    a->scene = Scene;
+    Scene->addItem(a);
+    a->draw();
     Scene->update();
 }

@@ -18,8 +18,8 @@ public:
     ~MainWindow();
     QGraphicsScene *Scene;
     void timerEvent(QTimerEvent *event);
-    Polygon *prevfocus = NULL;
-    bool changing = 0;
+    Polygon *polygon_prevfocus = NULL;
+    Circle *circle_prevfocus = NULL;
     QStringList myparse(QString text, bool *ok);
 private slots:
     void on_add_polygon_clicked();
@@ -34,6 +34,8 @@ private slots:
     void on_add_figure_clicked();
 
     void on_add_circle_clicked();
+
+    void on_draw_circle_clicked();
 
 private:
     Ui::MainWindow *ui;

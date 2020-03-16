@@ -207,7 +207,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QPushButton" name="draw_circle">
     <property name="geometry">
      <rect>
       <x>730</x>

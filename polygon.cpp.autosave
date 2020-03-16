@@ -39,10 +39,8 @@ void Polygon::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
         if (zoom > this->scale()) ok = 1; else ok = 0;
         if (ok) this->setScale(this->scale() +  0.001 * time1.elapsed());
             else this->setScale(this->scale() - 0.001 * time1.elapsed());
-        if ((ok && zoom <= this->scale()) || (!ok && zoom >= this->scale())) {
-            iszooming = 0;
+        if ((ok && zoom <= this->scale()) || (!ok && zoom >= this->scale()))
             this->setScale(zoom);
-        }
         if (time1.elapsed() != 0) time1.restart();
     }
     if (isrotate) {
