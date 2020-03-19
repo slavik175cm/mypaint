@@ -7,6 +7,7 @@
 #include <QString>
 #include <QtMath>
 #include <QVector>
+#include <QKeyEvent>
 
 Polygon* Polygon::focused = NULL;
 Circle* Circle::focused = NULL;
@@ -85,7 +86,7 @@ void MainWindow::on_zoom_valueChanged(int value)
         if (Polygon::focused->iszooming) return;
         Polygon::focused->setScale(zoom);
         ui->zoom_text->setText(QString::number(Polygon::focused->scale()));
-     }
+    }
     if (Circle::focused != NULL && !Circle::focused->iszooming) {
         Circle::focused->setScale(zoom);
         ui->zoom_text->setText(QString::number(Circle::focused->scale()));
@@ -102,7 +103,6 @@ void MainWindow::on_change_zoom_button_clicked()
         Polygon::focused->zoom_out(ui->zoom_text->text().toDouble());
     if (Circle::focused != NULL)
         Circle::focused->zoom_out(ui->zoom_text->text().toDouble());
-
 }
 
 QStringList MainWindow::myparse(QString text, bool *ok) {
@@ -152,6 +152,7 @@ void MainWindow::on_add_circle_clicked()
         a->radius = list[i + 2].toDouble();
         a->setTransformOriginPoint(a->x, a->y);
         a->focused = a;
+        Polygon::focused = NULL;
         a->bound = QRectF(a->x - a->radius, a->y - a->radius, a->radius * 2, a->radius * 2);
         a->scene = Scene;
         Scene->addItem(a);
@@ -166,4 +167,23 @@ void MainWindow::on_draw_circle_clicked()
     Scene->addItem(a);
     a->draw();
     Scene->update();
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event) {
+    if (event->key() == Qt::Key_Escape) {
+        if (Polygon::focused != NULL) {
+            delete Polygon::focused;
+            Polygon::focused = NULL;
+        }
+        if (Circle::focused != NULL) {
+            if (Circle::focused->isdrawing) {
+                QCursor cursor(Qt::CustomCursor);
+                cursor.setPos(Circle::focused->realcenter);
+                QApplication::setOverrideCursor(cursor);
+                QApplication::changeOverrideCursor(cursor);
+            }
+            delete Circle::focused;
+            Circle::focused = NULL;
+        }
+    }
 }

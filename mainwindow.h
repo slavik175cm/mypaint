@@ -37,6 +37,8 @@ private slots:
 
     void on_draw_circle_clicked();
 
+    void keyPressEvent(QKeyEvent *event);
+
 private:
     Ui::MainWindow *ui;
 };

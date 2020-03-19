@@ -40,8 +40,8 @@ void Polygon::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
         if (ok) this->setScale(this->scale() +  0.001 * time1.elapsed());
             else this->setScale(this->scale() - 0.001 * time1.elapsed());
         if ((ok && zoom <= this->scale()) || (!ok && zoom >= this->scale())) {
-            iszooming = 0;
             this->setScale(zoom);
+            iszooming = 0;
         }
         if (time1.elapsed() != 0) time1.restart();
     }
